@@ -1,0 +1,4 @@
+export enum TipoEvento {
+  CONFIRMAR_VENDA = 'CONFIRMAR_VENDA',
+  CANCELAR_VENDA = 'CANCELAR_VENDA',
+}

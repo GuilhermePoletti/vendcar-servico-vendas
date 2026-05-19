@@ -1,0 +1,61 @@
+// Prisma Schema — Serviço de Vendas (db_vendas)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────
+
+enum StatusPagamento {
+  AGUARDANDO
+  PAGO
+  CANCELADO
+}
+
+enum StatusEvento {
+  PENDENTE
+  PROCESSADO
+  ERRO
+}
+
+enum TipoEvento {
+  CONFIRMAR_VENDA
+  CANCELAR_VENDA
+}
+
+// ─────────────────────────────────────────────
+// MODELOS
+// ─────────────────────────────────────────────
+
+model Venda {
+  id                 String          @id @default(uuid())
+  cpf_cliente        String
+  id_veiculo_catalogo String
+  data_venda         DateTime        @default(now())
+  preco_venda        Decimal         @db.Decimal(12, 2)
+  status_pagamento   StatusPagamento @default(AGUARDANDO)
+  codigo_pagamento   String          @unique
+  criado_em          DateTime        @default(now())
+  atualizado_em      DateTime        @updatedAt
+
+  @@map("vendas")
+}
+
+model FilaEventos {
+  id            String      @id @default(uuid())
+  tipo_evento   TipoEvento
+  payload       Json
+  status        StatusEvento @default(PENDENTE)
+  tentativas    Int          @default(0)
+  data_criacao  DateTime     @default(now())
+  atualizado_em DateTime     @updatedAt
+
+  @@map("fila_eventos")
+}

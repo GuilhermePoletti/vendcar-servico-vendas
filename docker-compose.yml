@@ -1,0 +1,138 @@
+version: '3.9'
+
+services:
+  # ─────────────────────────────────────────────
+  # DATABASES
+  # ─────────────────────────────────────────────
+
+  db-principal:
+    image: postgres:16-alpine
+    container_name: vendcar-db-principal
+    environment:
+      POSTGRES_DB: db_principal
+      POSTGRES_USER: vendcar
+      POSTGRES_PASSWORD: vendcar123
+    ports:
+      - '5432:5432'
+    volumes:
+      - db-principal-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U vendcar -d db_principal']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  db-vendas:
+    image: postgres:16-alpine
+    container_name: vendcar-db-vendas
+    environment:
+      POSTGRES_DB: db_vendas
+      POSTGRES_USER: vendcar
+      POSTGRES_PASSWORD: vendcar123
+    ports:
+      - '5433:5432'
+    volumes:
+      - db-vendas-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U vendcar -d db_vendas']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ─────────────────────────────────────────────
+  # SERVICES
+  # ─────────────────────────────────────────────
+
+  servico-principal:
+    build:
+      context: ../vendcar-servico-principal
+      dockerfile: Dockerfile
+    container_name: vendcar-servico-principal
+    depends_on:
+      db-principal:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://vendcar:vendcar123@db-principal:5432/db_principal
+      JWT_SECRET: vendcar-jwt-secret-prod
+      PORT: 3000
+    ports:
+      - '3000:3000'
+
+  servico-vendas:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vendcar-servico-vendas
+    depends_on:
+      db-vendas:
+        condition: service_healthy
+      servico-principal:
+        condition: service_started
+    environment:
+      DATABASE_URL: postgresql://vendcar:vendcar123@db-vendas:5432/db_vendas
+      CATALOGO_API_URL: http://servico-principal:3000
+      PORT: 3001
+    ports:
+      - '3001:3001'
+
+  # ─────────────────────────────────────────────
+  # KONG API GATEWAY
+  # ─────────────────────────────────────────────
+
+  kong-database:
+    image: postgres:16-alpine
+    container_name: vendcar-kong-db
+    environment:
+      POSTGRES_DB: kong
+      POSTGRES_USER: kong
+      POSTGRES_PASSWORD: kong
+    volumes:
+      - kong-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U kong -d kong']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  kong-migrations:
+    image: kong:3.6
+    container_name: vendcar-kong-migrations
+    depends_on:
+      kong-database:
+        condition: service_healthy
+    environment:
+      KONG_DATABASE: postgres
+      KONG_PG_HOST: kong-database
+      KONG_PG_USER: kong
+      KONG_PG_PASSWORD: kong
+    command: kong migrations bootstrap
+    restart: 'no'
+
+  kong:
+    image: kong:3.6
+    container_name: vendcar-kong
+    depends_on:
+      kong-database:
+        condition: service_healthy
+      kong-migrations:
+        condition: service_completed_successfully
+    environment:
+      KONG_DATABASE: postgres
+      KONG_PG_HOST: kong-database
+      KONG_PG_USER: kong
+      KONG_PG_PASSWORD: kong
+      KONG_PROXY_LISTEN: 0.0.0.0:8000
+      KONG_ADMIN_LISTEN: 0.0.0.0:8001
+    ports:
+      - '8000:8000'
+      - '8001:8001'
+    healthcheck:
+      test: ['CMD', 'kong', 'health']
+      interval: 10s
+      timeout: 10s
+      retries: 10
+
+volumes:
+  db-principal-data:
+  db-vendas-data:
+  kong-db-data:
