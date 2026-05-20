@@ -23,7 +23,8 @@ export class VendaController {
   @ApiResponse({ status: 400, description: 'Dados inválidos ou veículo não disponível' })
   async iniciarVenda(@Body() dto: IniciarVendaDto) {
     try {
-      return await this.iniciarVendaUseCase.execute(dto);
+      const venda = await this.iniciarVendaUseCase.execute(dto);
+      return venda.toJSON();
     } catch (error) {
       if (error instanceof DomainException) {
         throw new BadRequestException(error.message);
@@ -36,6 +37,7 @@ export class VendaController {
   @ApiOperation({ summary: 'Listar veículos vendidos (preço crescente)' })
   @ApiResponse({ status: 200, description: 'Lista de veículos vendidos' })
   async listarVeiculosVendidos() {
-    return this.listarVeiculosVendidosUseCase.execute();
+    const vendas = await this.listarVeiculosVendidosUseCase.execute();
+    return vendas.map(v => v.toJSON());
   }
 }

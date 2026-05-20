@@ -78,4 +78,16 @@ export class Venda {
       throw new DomainException('Preço da venda deve ser maior que zero');
     }
   }
+
+  toJSON() {
+    return {
+      id: this.id,
+      cpfCliente: this.cpfCliente,
+      idVeiculoCatalogo: this.idVeiculoCatalogo,
+      dataVenda: this.dataVenda,
+      precoVenda: this.precoVenda,
+      statusPagamento: this.statusPagamento,
+      codigoPagamento: this.codigoPagamento,
+    };
+  }
 }
