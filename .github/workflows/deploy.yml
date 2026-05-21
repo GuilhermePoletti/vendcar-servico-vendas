@@ -18,6 +18,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Lowercase image name
+        run: |
+          echo "IMAGE_NAME=${{ github.repository }}" | tr '[:upper:]' '[:lower:]' >> $GITHUB_ENV
+
       - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
