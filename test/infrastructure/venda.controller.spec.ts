@@ -25,7 +25,7 @@ describe('VendaController', () => {
 
     const result = await controller.iniciarVenda({ cpfCliente: '52998224725', idVeiculo: 'v-1' });
 
-    expect(result).toBe(venda);
+    expect(result).toEqual(venda.toJSON());
   });
 
   it('deve lançar BadRequestException em erro de domínio ao iniciar venda', async () => {

@@ -45,7 +45,7 @@ services:
 
   servico-principal:
     build:
-      context: ../vendcar-servico-principal
+      context: ../servico-principal
       dockerfile: Dockerfile
     container_name: vendcar-servico-principal
     depends_on:
