@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: servico-vendas
-          image: ghcr.io/guilhermepoletti/vendcar-servico-vendas:latest
+          image: ghcr.io/guilhermepoletti/vendcar-servico-vendas:11162ae0d0cb7b024807ce048b8a58109a9c296b
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3001
